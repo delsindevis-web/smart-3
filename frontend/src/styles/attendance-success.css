@@ -1,0 +1,303 @@
+/* ================================
+   ATTENDANCE SUCCESS PAGE
+================================ */
+
+.success-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 15% 20%,
+      rgba(79, 70, 229, 0.18),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 85% 75%,
+      rgba(99, 102, 241, 0.12),
+      transparent 35%
+    ),
+    #050914;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 40px 20px;
+  color: #f8fafc;
+}
+
+
+/* ================================
+   CARD
+================================ */
+
+.success-card {
+  width: 100%;
+  max-width: 560px;
+
+  background: rgba(15, 23, 42, 0.92);
+
+  border: 1px solid #1e293b;
+  border-radius: 20px;
+
+  padding: 42px;
+
+  text-align: center;
+
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.35),
+    0 0 40px rgba(79, 70, 229, 0.08);
+
+  backdrop-filter: blur(14px);
+}
+
+
+/* ================================
+   SUCCESS ICON
+================================ */
+
+.success-check {
+  width: 82px;
+  height: 82px;
+
+  margin: 0 auto 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+
+  color: #22c55e;
+
+  font-size: 44px;
+  font-weight: 700;
+
+  box-shadow:
+    0 0 0 8px rgba(34, 197, 94, 0.05),
+    0 0 35px rgba(34, 197, 94, 0.12);
+
+  animation: success-pop 0.5s ease-out;
+}
+
+
+/* ================================
+   TITLE
+================================ */
+
+.success-card h1 {
+  margin: 0 0 12px;
+
+  color: #f8fafc;
+
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+
+/* ================================
+   MESSAGE
+================================ */
+
+.success-message {
+  margin: 0 0 30px;
+
+  color: #94a3b8;
+
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+
+/* ================================
+   ATTENDANCE DETAILS
+================================ */
+
+.attendance-details {
+  display: flex;
+  gap: 14px;
+
+  margin-bottom: 24px;
+}
+
+.attendance-details div {
+  flex: 1;
+
+  background: #0b1222;
+
+  border: 1px solid #1e293b;
+
+  border-radius: 12px;
+
+  padding: 18px;
+
+  text-align: left;
+}
+
+.attendance-details span {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #64748b;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.attendance-details strong {
+  color: #e2e8f0;
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+
+/* ================================
+   VERIFICATION SUMMARY
+================================ */
+
+.success-verification {
+  background: #0b1222;
+
+  border: 1px solid #1e293b;
+
+  border-radius: 12px;
+
+  padding: 18px;
+
+  margin-bottom: 24px;
+
+  text-align: left;
+}
+
+.success-verification p {
+  margin: 9px 0;
+
+  color: #94a3b8;
+
+  font-size: 13px;
+}
+
+.success-verification p::first-letter {
+  color: #22c55e;
+}
+
+
+/* ================================
+   SUCCESS NOTE
+================================ */
+
+.success-note {
+  color: #64748b;
+
+  font-size: 13px;
+  line-height: 1.6;
+
+  margin: 0;
+}
+
+
+/* ================================
+   OPTIONAL BACK BUTTON
+================================ */
+
+.success-button {
+  width: 100%;
+
+  margin-top: 24px;
+
+  padding: 13px 18px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: linear-gradient(
+    135deg,
+    #6366f1,
+    #4f46e5
+  );
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.success-button:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 25px rgba(79, 70, 229, 0.28);
+}
+
+.success-button:active {
+  transform: translateY(0);
+}
+
+
+/* ================================
+   ANIMATION
+================================ */
+
+@keyframes success-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  70% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 600px) {
+  .success-page {
+    padding: 20px 14px;
+  }
+
+  .success-card {
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+
+  .success-card h1 {
+    font-size: 26px;
+  }
+
+  .attendance-details {
+    flex-direction: column;
+  }
+
+  .success-check {
+    width: 72px;
+    height: 72px;
+
+    font-size: 38px;
+  }
+}
+
+

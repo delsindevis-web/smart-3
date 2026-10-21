@@ -1,0 +1,330 @@
+/* ========================================
+   DASHBOARD
+======================================== */
+
+.dashboard-page {
+  min-height: 100vh;
+  padding: 40px 24px;
+
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(99, 102, 241, 0.10),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 90% 90%,
+      rgba(79, 70, 229, 0.07),
+      transparent 30%
+    );
+}
+
+.dashboard-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+
+/* ========================================
+   HEADER
+======================================== */
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 40px;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 8px;
+
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+
+  color: var(--text-primary);
+}
+
+.dashboard-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+
+/* ========================================
+   STUDENT INFO
+======================================== */
+
+.student-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  padding: 10px 16px;
+
+  background: rgba(15, 23, 42, 0.65);
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  backdrop-filter: blur(12px);
+}
+
+.student-info span {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.student-info strong {
+  margin-top: 4px;
+
+  color: #c7d2fe;
+
+  font-size: 14px;
+}
+
+
+/* ========================================
+   ATTENDANCE SUMMARY
+======================================== */
+
+.attendance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 16px;
+
+  margin-bottom: 44px;
+}
+
+.summary-card {
+  position: relative;
+
+  padding: 24px;
+
+  background: rgba(15, 23, 42, 0.72);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-card);
+
+  overflow: hidden;
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.summary-card::after {
+  content: '';
+
+  position: absolute;
+
+  width: 90px;
+  height: 90px;
+
+  right: -30px;
+  bottom: -40px;
+
+  background: rgba(99, 102, 241, 0.08);
+
+  border-radius: 50%;
+
+  filter: blur(20px);
+}
+
+.summary-card:hover {
+  transform: translateY(-3px);
+
+  border-color: var(--border-hover);
+
+  background: rgba(20, 29, 50, 0.82);
+}
+
+.summary-card span {
+  display: block;
+
+  margin-bottom: 10px;
+
+  color: var(--text-muted);
+
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-card strong {
+  color: var(--text-primary);
+
+  font-size: 30px;
+  font-weight: 700;
+}
+
+
+/* ========================================
+   TODAY'S CLASSES
+======================================== */
+
+.classes-section h2 {
+  margin-bottom: 18px;
+
+  color: var(--text-primary);
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.class-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+
+/* ========================================
+   CLASS CARD
+======================================== */
+
+.class-card {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 20px 22px;
+
+  background: rgba(15, 23, 42, 0.68);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.16);
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.class-card:hover {
+  transform: translateY(-2px);
+
+  border-color: var(--border-hover);
+
+  background: rgba(20, 29, 50, 0.8);
+}
+
+.class-card h3 {
+  margin-bottom: 6px;
+
+  color: var(--text-primary);
+
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.class-card p {
+  color: var(--text-secondary);
+
+  font-size: 13px;
+}
+
+
+/* ========================================
+   ATTENDANCE BUTTON
+======================================== */
+
+.class-card button {
+  flex-shrink: 0;
+
+  padding: 11px 18px;
+
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    var(--primary),
+    var(--primary-dark)
+  );
+
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 20px rgba(79, 70, 229, 0.18);
+
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.class-card button:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 25px rgba(79, 70, 229, 0.3);
+
+  filter: brightness(1.08);
+}
+
+.class-card button:active {
+  transform: translateY(0);
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 700px) {
+
+  .dashboard-page {
+    padding: 28px 16px;
+  }
+
+  .dashboard-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 18px;
+
+    margin-bottom: 30px;
+  }
+
+  .student-info {
+    align-items: flex-start;
+  }
+
+  .attendance-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .class-card {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .class-card button {
+    width: 100%;
+  }
+}
+
+

@@ -1,0 +1,275 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Attendance</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f6f8;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        h1 {
+            font-size: 32px;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        #result {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+        .waiting {
+            background: #eeeeee;
+            color: #333333;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        #debug {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #666;
+            word-break: break-word;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Student Attendance</h1>
+
+        <p>Point your camera at the teacher's Dynamic QR</p>
+
+        <div id="reader"></div>
+
+        <div id="result" class="waiting">
+            Starting camera...
+        </div>
+
+        <div id="debug"></div>
+
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <script>
+
+        const result = document.getElementById("result");
+        const debug = document.getElementById("debug");
+
+        let scannerStarted = false;
+        let scanCompleted = false;
+
+
+        function showSuccess(message) {
+
+            result.innerHTML = message;
+            result.className = "success";
+
+        }
+
+
+        function showError(message) {
+
+            result.innerHTML = message;
+            result.className = "error";
+
+        }
+
+
+        function showWaiting(message) {
+
+            result.innerHTML = message;
+            result.className = "waiting";
+
+        }
+
+
+        // ==========================================
+        // QR SUCCESS
+        // ==========================================
+
+        function onScanSuccess(decodedText, decodedResult) {
+
+            if (scanCompleted) {
+                return;
+            }
+
+            console.log("QR DETECTED:");
+            console.log(decodedText);
+
+            debug.innerHTML =
+                "QR detected. Reading data...";
+
+            try {
+
+                // Convert QR text into JSON
+                const qrData = JSON.parse(decodedText);
+
+                console.log("QR DATA:", qrData);
+
+                // Check required fields
+                if (
+                    !qrData.sessionId ||
+                    !qrData.token ||
+                    !qrData.issuedAt ||
+                    !qrData.expiresAt
+                ) {
+
+                    showError("Invalid QR format.");
+
+                    return;
+                }
+
+
+                // ==========================================
+                // CHECK EXPIRATION
+                // ==========================================
+
+                const currentTime = new Date();
+                const expiryTime = new Date(qrData.expiresAt);
+
+                if (currentTime > expiryTime) {
+
+                    showError(
+                        "QR code has expired.<br>" +
+                        "Please scan the latest QR."
+                    );
+
+                    return;
+                }
+
+
+                // ==========================================
+                // QR IS VALID
+                // ==========================================
+
+                scanCompleted = true;
+
+                showSuccess(
+                    "QR Verified Γ£ô<br><br>" +
+                    "Session: " + qrData.sessionId
+                );
+
+                debug.innerHTML =
+                    "Token verified successfully.";
+
+                console.log("VALID QR:", qrData);
+
+
+                // Stop camera after successful scan
+                if (scannerStarted) {
+
+                    scanner.clear()
+                        .then(() => {
+                            console.log("Scanner stopped.");
+                        })
+                        .catch(error => {
+                            console.log("Could not stop scanner:", error);
+                        });
+
+                }
+
+            }
+
+            catch (error) {
+
+                console.error("QR parsing error:", error);
+
+                showError("QR detected, but data is invalid.");
+
+            }
+
+        }
+
+
+        // ==========================================
+        // SCAN FAILURE
+        // ==========================================
+
+        function onScanFailure(errorMessage) {
+
+            // This happens continuously while the camera
+            // is searching. We don't display it because
+            // it is normal.
+
+        }
+
+
+        // ==========================================
+        // CREATE SCANNER
+        // ==========================================
+
+        const scanner = new Html5QrcodeScanner(
+            "reader",
+            {
+                fps: 15,
+
+                qrbox: {
+                    width: 300,
+                    height: 300
+                },
+
+                aspectRatio: 1.0,
+
+                rememberLastUsedCamera: true
+            },
+
+            false
+        );
+
+
+        // ==========================================
+        // START SCANNER
+        // ==========================================
+
+        scanner.render(
+            onScanSuccess,
+            onScanFailure
+        );
+
+        scannerStarted = true;
+
+        showWaiting(
+            "Camera started.<br>" +
+            "Point it at the teacher's QR."
+        );
+
+    </script>
+
+</body>
+
+</html>

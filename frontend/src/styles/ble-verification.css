@@ -1,0 +1,811 @@
+/* ========================================
+   BLE PAGE
+======================================== */
+
+.ble-page {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px 20px;
+
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(99, 102, 241, 0.12),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(59, 130, 246, 0.08),
+      transparent 30%
+    );
+}
+
+
+/* ========================================
+   CARD
+======================================== */
+
+.ble-card {
+  position: relative;
+
+  width: 100%;
+  max-width: 560px;
+
+  padding: 40px;
+
+  background: rgba(15, 23, 42, 0.78);
+
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius-lg);
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+
+  overflow: hidden;
+
+  animation: bleCardAppear 0.5s ease-out;
+}
+
+
+/* subtle glow */
+
+.ble-card::before {
+  content: "";
+
+  position: absolute;
+
+  width: 240px;
+  height: 240px;
+
+  top: -140px;
+  right: -100px;
+
+  border-radius: 50%;
+
+  background: rgba(99, 102, 241, 0.1);
+
+  filter: blur(50px);
+
+  pointer-events: none;
+}
+
+
+/* ========================================
+   HEADER
+======================================== */
+
+.ble-header {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 18px;
+
+  margin-bottom: 32px;
+}
+
+.ble-icon-wrapper {
+  flex-shrink: 0;
+}
+
+.ble-icon {
+  width: 54px;
+  height: 54px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #a5b4fc;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(99, 102, 241, 0.2),
+      rgba(59, 130, 246, 0.08)
+    );
+
+  border: 1px solid rgba(99, 102, 241, 0.25);
+
+  border-radius: 16px;
+
+  transition:
+    transform 200ms ease,
+    background 200ms ease;
+}
+
+.ble-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.ble-icon.scanning,
+.ble-icon.checking {
+  animation: iconPulse 1.5s ease-in-out infinite;
+}
+
+.ble-icon.verified {
+  color: #4ade80;
+
+  background: rgba(34, 197, 94, 0.1);
+
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.ble-eyebrow {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #818cf8;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 1.2px;
+}
+
+.ble-header h1 {
+  margin-bottom: 8px;
+
+  color: var(--text-primary);
+
+  font-size: 27px;
+  font-weight: 800;
+
+  letter-spacing: -0.5px;
+}
+
+.ble-header p {
+  max-width: 430px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* ========================================
+   SCANNER
+======================================== */
+
+.ble-scanner {
+  position: relative;
+
+  width: 190px;
+  height: 190px;
+
+  margin: 0 auto 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scanner-ring {
+  position: absolute;
+
+  border: 1px solid rgba(99, 102, 241, 0.2);
+
+  border-radius: 50%;
+}
+
+.ring-one {
+  width: 70px;
+  height: 70px;
+
+  border-color: rgba(129, 140, 248, 0.55);
+}
+
+.ring-two {
+  width: 120px;
+  height: 120px;
+
+  animation:
+    scannerPulse 2s ease-out infinite;
+}
+
+.ring-three {
+  width: 175px;
+  height: 175px;
+
+  animation:
+    scannerPulse 2s ease-out 0.6s infinite;
+}
+
+.scanner-center {
+  position: relative;
+  z-index: 2;
+
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #4f46e5
+    );
+
+  border: 4px solid rgba(129, 140, 248, 0.2);
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 30px rgba(99, 102, 241, 0.45);
+}
+
+.scanner-center span {
+  width: 9px;
+  height: 9px;
+
+  background: white;
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.9);
+
+  animation: centerPulse 1.2s ease-in-out infinite;
+}
+
+
+/* ========================================
+   VERIFIED
+======================================== */
+
+.ble-scanner.verified {
+  height: 150px;
+}
+
+.verified-symbol {
+  width: 78px;
+  height: 78px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+
+  background: #22c55e;
+
+  border-radius: 50%;
+
+  font-size: 42px;
+  font-weight: 700;
+
+  box-shadow:
+    0 0 0 12px rgba(34, 197, 94, 0.08),
+    0 0 45px rgba(34, 197, 94, 0.3);
+
+  animation: verifiedAppear 0.5s ease-out;
+}
+
+
+/* ========================================
+   STATUS PANEL
+======================================== */
+
+.ble-status-panel {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 15px 16px;
+
+  margin-bottom: 24px;
+
+  background: rgba(2, 6, 23, 0.45);
+
+  border: 1px solid var(--border);
+
+  border-radius: 14px;
+
+  transition:
+    border-color 200ms ease,
+    background 200ms ease;
+}
+
+.ble-status-panel.scanning,
+.ble-status-panel.checking {
+  border-color: rgba(99, 102, 241, 0.22);
+}
+
+.ble-status-panel.verified {
+  background: rgba(34, 197, 94, 0.06);
+
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.status-indicator {
+  flex-shrink: 0;
+
+  width: 12px;
+  height: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+
+  background: #64748b;
+
+  border-radius: 50%;
+}
+
+.scanning .status-dot,
+.checking .status-dot {
+  background: #818cf8;
+
+  box-shadow:
+    0 0 0 5px rgba(99, 102, 241, 0.1);
+
+  animation: statusPulse 1.2s ease-in-out infinite;
+}
+
+.verified .status-dot {
+  background: #22c55e;
+
+  box-shadow:
+    0 0 0 5px rgba(34, 197, 94, 0.08);
+}
+
+.status-text h2 {
+  margin-bottom: 3px;
+
+  color: var(--text-primary);
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-text p {
+  color: var(--text-secondary);
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* ========================================
+   VERIFICATION STEPS
+======================================== */
+
+.verification-steps {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+
+  margin-bottom: 24px;
+}
+
+.verification-step {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 12px 13px;
+
+  border: 1px solid transparent;
+
+  border-radius: 12px;
+
+  opacity: 0.45;
+
+  transition:
+    opacity 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.verification-step.active {
+  opacity: 1;
+
+  background: rgba(99, 102, 241, 0.06);
+
+  border-color: rgba(99, 102, 241, 0.14);
+}
+
+.verification-step.complete {
+  opacity: 1;
+
+  background: rgba(34, 197, 94, 0.05);
+
+  border-color: rgba(34, 197, 94, 0.12);
+}
+
+.step-icon {
+  width: 28px;
+  height: 28px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #64748b;
+
+  background: rgba(100, 116, 139, 0.1);
+
+  border: 1px solid rgba(100, 116, 139, 0.16);
+
+  border-radius: 50%;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.verification-step.active .step-icon {
+  color: #a5b4fc;
+
+  background: rgba(99, 102, 241, 0.12);
+
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.verification-step.complete .step-icon {
+  color: #4ade80;
+
+  background: rgba(34, 197, 94, 0.1);
+
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.verification-step strong {
+  display: block;
+
+  margin-bottom: 2px;
+
+  color: #cbd5e1;
+
+  font-size: 12px;
+}
+
+.verification-step small {
+  color: #64748b;
+
+  font-size: 11px;
+}
+
+
+/* ========================================
+   PROGRESS
+======================================== */
+
+.ble-progress {
+  margin-bottom: 24px;
+}
+
+.progress-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 9px;
+
+  color: var(--text-secondary);
+
+  font-size: 11px;
+}
+
+.progress-percentage {
+  color: #a5b4fc;
+
+  font-weight: 600;
+}
+
+.progress-track {
+  width: 100%;
+  height: 6px;
+
+  overflow: hidden;
+
+  background: rgba(100, 116, 139, 0.12);
+
+  border-radius: 20px;
+}
+
+.progress-fill {
+  height: 100%;
+
+  width: 50%;
+
+  background:
+    linear-gradient(
+      90deg,
+      #6366f1,
+      #818cf8
+    );
+
+  border-radius: inherit;
+
+  animation: progressGlow 1.5s ease-in-out infinite;
+}
+
+.progress-fill.checking {
+  width: 85%;
+}
+
+.ble-progress p {
+  margin-top: 9px;
+
+  color: #64748b;
+
+  font-size: 11px;
+}
+
+
+/* ========================================
+   BUTTON
+======================================== */
+
+.ble-actions {
+  margin-top: 6px;
+}
+
+.ble-button {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+
+  padding: 14px 18px;
+
+  border-radius: 12px;
+
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.ble-button.primary {
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #4f46e5
+    );
+
+  box-shadow:
+    0 10px 25px rgba(79, 70, 229, 0.25);
+}
+
+.ble-button.success {
+  background:
+    linear-gradient(
+      135deg,
+      #16a34a,
+      #15803d
+    );
+
+  box-shadow:
+    0 10px 25px rgba(22, 163, 74, 0.2);
+}
+
+.ble-button:hover {
+  transform: translateY(-2px);
+
+  filter: brightness(1.08);
+}
+
+.ble-button:active {
+  transform: translateY(0);
+}
+
+.button-arrow {
+  font-size: 18px;
+
+  transition:
+    transform 180ms ease;
+}
+
+.ble-button:hover .button-arrow {
+  transform: translateX(4px);
+}
+
+
+/* ========================================
+   FOOTER
+======================================== */
+
+.ble-footer {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  margin-top: 20px;
+
+  color: #475569;
+
+  font-size: 10px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.7px;
+}
+
+.security-dot {
+  width: 5px;
+  height: 5px;
+
+  background: #22c55e;
+
+  border-radius: 50%;
+}
+
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+
+@keyframes scannerPulse {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.75);
+  }
+
+  70% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes centerPulse {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes progressGlow {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes verifiedAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bleCardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 600px) {
+  .ble-page {
+    padding: 24px 16px;
+  }
+
+  .ble-card {
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+
+  .ble-header {
+    gap: 14px;
+  }
+
+  .ble-header h1 {
+    font-size: 23px;
+  }
+
+  .ble-header p {
+    font-size: 12px;
+  }
+
+  .ble-icon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .ble-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .ble-scanner {
+    width: 170px;
+    height: 170px;
+  }
+}
+
+

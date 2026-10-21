@@ -1,0 +1,116 @@
+.professor-login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: #f3f6fb;
+  font-family: Arial, sans-serif;
+}
+
+.professor-login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 42px 36px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+.professor-login-icon {
+  text-align: center;
+  font-size: 42px;
+  margin-bottom: 16px;
+}
+
+.professor-login-card h1 {
+  margin: 0;
+  text-align: center;
+  font-size: 28px;
+  color: #111827;
+}
+
+.professor-login-subtitle {
+  margin: 12px 0 30px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.professor-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.professor-form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.professor-form-group input {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.professor-form-group input:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+
+.professor-login-button {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+  border: none;
+  border-radius: 9px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.professor-login-button:hover {
+  background: #263449;
+}
+
+.professor-login-error {
+  margin: 0 0 12px;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.professor-login-footer {
+  margin: 26px 0 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+@media (max-width: 480px) {
+  .professor-login-page {
+    padding: 16px;
+  }
+
+  .professor-login-card {
+    padding: 32px 24px;
+  }
+
+  .professor-login-card h1 {
+    font-size: 24px;
+  }
+}
+
