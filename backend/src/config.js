@@ -19,7 +19,12 @@ function loadDotEnv(file) {
 export function loadConfig(overrides = {}) {
   loadDotEnv(path.join(ROOT, '.env'));
   const env = process.env;
-  const num = (k, d) => (env[k] !== undefined && env[k] !== '' ? Number(env[k]) : d);
+  const num = (k, d) => {
+    if (env[k] === undefined || env[k] === '') return d;
+    const value = Number(env[k]);
+    if (!Number.isFinite(value)) throw new Error(`${k} must be a finite number (got: ${env[k]})`);
+    return value;
+  };
   const bool = (k, d) => (env[k] === undefined || env[k] === '' ? d : ['1', 'true', 'yes'].includes(env[k].toLowerCase()));
   const list = (k, d) => (env[k] ? env[k].split(',').map((s) => s.trim()).filter(Boolean) : d);
 
@@ -57,6 +62,24 @@ export function loadConfig(overrides = {}) {
   const bad = config.requiredFactors.filter((f) => !FACTORS.includes(f));
   if (bad.length || config.requiredFactors.length === 0) {
     throw new Error(`REQUIRED_FACTORS must be a non-empty subset of ${FACTORS.join(',')} (got: ${config.requiredFactors})`);
+  }
+  const positive = ['port', 'tokenTtlHours', 'attemptTtlMinutes'];
+  for (const key of positive) {
+    if (config[key] <= 0) throw new Error(`${key} must be greater than 0`);
+  }
+  for (const key of ['qrTtlSeconds', 'livenessChallengeTtlSeconds']) {
+    if (config[key] <= 0) throw new Error(`${key} must be greater than 0`);
+  }
+  if (config.qrGraceSeconds < 0 || config.livenessMinResponseMs < 0) {
+    throw new Error('QR grace and liveness response times cannot be negative');
+  }
+  if (config.port > 65535 || !Number.isInteger(config.port)) {
+    throw new Error('port must be an integer between 1 and 65535');
+  }
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: config.timezone });
+  } catch {
+    throw new Error(`TIMEZONE must be a valid IANA timezone (got: ${config.timezone})`);
   }
   return config;
 }
