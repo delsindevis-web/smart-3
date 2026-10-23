@@ -32,8 +32,8 @@ Show `error.message` to the user; branch on `error.code` in code.
 | Dashboard → "Mark Attendance" | `POST /api/attendance/attempts` `{ courseId }` (or `{ sessionCode }`) | → `201 { attemptId, requiredFactors, verified:{ble,qr,face}, session, expiresAt }`. Safe to call again after a refresh; it resumes the same attempt. |
 | BleVerification | `POST /api/attendance/attempts/:id/ble` `{ beaconId, rssi }` | `rssi` is negative dBm. Errors: `BLE_BEACON_MISMATCH`, `BLE_TOO_FAR`. |
 | (optional) QR scan | `POST /api/attendance/attempts/:id/qr` `{ token }` | `token` is the `token` field from the scanned QR JSON. Errors: `QR_INVALID`, `QR_EXPIRED`. |
-| FaceLiveness (start) | `POST /api/attendance/attempts/:id/liveness/challenge` | → `{ challengeId, nonce, actions:["blink","turn_left"], expiresAt }`. Show `actions` to the user. |
-| FaceLiveness (result) | `POST /api/attendance/attempts/:id/liveness` `{ challengeId, nonce, passed, score }` | `score` is 0-1. Errors: `LIVENESS_FAILED`, `LIVENESS_CHALLENGE_USED`, `LIVENESS_CHALLENGE_EXPIRED`, `LIVENESS_CHALLENGE_INVALID`, `LIVENESS_TOO_FAST`. Each challenge can be answered once. |
+| FaceLiveness (start) | `POST /api/attendance/attempts/:id/liveness/challenge` | → `{ challengeId, nonce, actions:["blink","turn_left"], baselineFrames:5, expiresAt }`. Show `actions` to the user. |
+| FaceLiveness (result) | `POST /api/attendance/attempts/:id/liveness` `{ challengeId, nonce, frames:[...] }` | The frontend captures 30 base64 JPEG frames at 10 fps, including five neutral baseline frames before the prompt appears. The backend sends `{ challengeId, nonce, actions, baselineFrames, frames }` to `LIVENESS_SERVICE_URL` with `LIVENESS_SERVICE_TOKEN`; client `passed`/`score` fields are ignored. The included MediaPipe service returns `{ passed:boolean, score:number, actionsCompleted:string[] }`; `score` is the fraction of requested actions detected, not model confidence. Without a configured service, the endpoint fails closed with `LIVENESS_UNAVAILABLE`. Errors: `LIVENESS_FAILED`, `LIVENESS_CHALLENGE_USED`, `LIVENESS_CHALLENGE_EXPIRED`, `LIVENESS_CHALLENGE_INVALID`, `LIVENESS_TOO_FAST`, `LIVENESS_CHALLENGE_RATE_LIMITED`. Each challenge can be answered once; at most three challenges can be issued per attempt and six per student in a rolling minute. At least ten ordered frames are required, including five neutral baseline frames; the encoded frame payload is limited to 8 MB. |
 | AttendanceSuccess | `POST /api/attendance/attempts/:id/complete` | → `{ status:"present", markedAt, session, verified }`. Error `VERIFICATION_INCOMPLETE` lists `details.missing`. |
 | (anytime) | `GET /api/attendance/attempts/:id` | current progress |
 
@@ -44,6 +44,7 @@ Other codes: `NO_ACTIVE_SESSION` (404), `SESSION_CLOSED` (409), `NOT_ENROLLED` (
 
 | Method & path | Notes |
 |---|---|
+| `POST /api/teacher/users` | `{ loginId, name, password }` creates a student account requiring that password (8–1024 characters) → `201 { user:{id,loginId,name,role} }`. Teacher-only. Duplicate IDs return `409 USER_ALREADY_EXISTS`. |
 | `GET /api/teacher/courses` | their courses + `beaconId` + `activeSessionCode` |
 | `POST /api/sessions` | `{ courseId, durationMinutes? = 60, beaconId? }` → `201` session `{ code:"CN301-001", … }`. One open session per course. |
 | `GET /api/sessions/:code` | session details |
@@ -105,18 +106,16 @@ onVerified();
 
 // FaceLiveness.jsx - start button
 const ch = await api(`/api/attendance/attempts/${attemptId}/liveness/challenge`, { method: "POST" });
-// ...show ch.actions to the user, run the liveness model, then:
+// Capture a short sequence of JPEG frames while performing the server-issued actions.
+// Send base64 JPEG strings; the server-side verifier evaluates them.
 await api(`/api/attendance/attempts/${attemptId}/liveness`, {
-  method: "POST", body: { challengeId: ch.challengeId, nonce: ch.nonce, passed, score },
+  method: "POST", body: { challengeId: ch.challengeId, nonce: ch.nonce, frames },
 });
 await api(`/api/attendance/attempts/${attemptId}/complete`, { method: "POST" });
 onVerified();
 ```
 
-Until the real BLE/face modules exist, you can send fixed values from the buttons so the whole pipeline
-works end to end: BLE `{ beaconId: "BLE-CN301", rssi: -60 }` and liveness `{ passed: true, score: 0.95 }`
-(beacon IDs are listed per course in `GET /api/teacher/courses`). The server enforces a minimum response
-time (0.8 s) between receiving a challenge and answering it, so don't submit in the same tick.
+Face verification requires a trusted inference endpoint configured as `LIVENESS_SERVICE_URL`; the backend rejects client-only pass claims. The BLE endpoint still accepts measurements made by the student device, so this project does not authenticate RSSI against relay attacks. Beacon identifiers are listed per course in `GET /api/teacher/courses`.
 
 **Teacher QR page** (`member3-dynamic-qr/frontend/index.html`): delete `generateToken()` and the client-side
 `qrPayload`. Instead, log in as the teacher, `POST /api/sessions`, then every second call

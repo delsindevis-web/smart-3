@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   name          TEXT NOT NULL,
   role          TEXT NOT NULL CHECK (role IN ('student','teacher')),
   password_hash TEXT,
+  password_required INTEGER NOT NULL DEFAULT 0,
   created_at    INTEGER NOT NULL
 );
 
@@ -73,6 +74,10 @@ CREATE TABLE IF NOT EXISTS liveness_challenges (
   used       INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE INDEX IF NOT EXISTS idx_liveness_attempt_issued ON liveness_challenges(attempt_id, issued_at);
+CREATE INDEX IF NOT EXISTS idx_liveness_issued_attempt ON liveness_challenges(issued_at, attempt_id);
+CREATE INDEX IF NOT EXISTS idx_liveness_expiry ON liveness_challenges(expires_at);
+
 CREATE TABLE IF NOT EXISTS attendance (
   id         INTEGER PRIMARY KEY,
   session_id INTEGER NOT NULL REFERENCES sessions(id),
@@ -99,6 +104,9 @@ export function openDb(dbPath) {
   db.exec('PRAGMA foreign_keys = ON;');
   if (dbPath !== ':memory:') db.exec('PRAGMA journal_mode = WAL;');
   db.exec(SCHEMA);
+  if (!db.prepare('PRAGMA table_info(users)').all().some((column) => column.name === 'password_required')) {
+    db.exec('ALTER TABLE users ADD COLUMN password_required INTEGER NOT NULL DEFAULT 0');
+  }
   return db;
 }
 

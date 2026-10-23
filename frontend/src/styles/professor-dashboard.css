@@ -311,6 +311,64 @@
   cursor: pointer;
 }
 
+.student-account-panel {
+  max-width: 560px;
+  padding: 24px;
+  border: 1px solid #e9edf4;
+  border-radius: 13px;
+  background: white;
+}
+
+.student-account-form {
+  display: grid;
+  gap: 10px;
+}
+
+.student-account-form label {
+  margin-top: 8px;
+  color: #526078;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-account-form input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #dfe4ee;
+  border-radius: 8px;
+  color: #182238;
+  font: inherit;
+}
+
+.student-account-form input:focus {
+  outline: 2px solid #c7c8ff;
+  border-color: #5b5ce2;
+}
+
+.student-account-form button {
+  justify-self: start;
+  margin-top: 12px;
+}
+
+.student-account-form button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.student-account-error,
+.student-account-success {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.student-account-error {
+  color: #b42318;
+}
+
+.student-account-success {
+  color: #16804a;
+}
+
 .schedule-list {
   display: grid;
   gap: 12px;
@@ -1345,4 +1403,3 @@
     gap: 12px;
   }
 }
-

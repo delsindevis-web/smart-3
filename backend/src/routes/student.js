@@ -21,7 +21,7 @@ export function registerStudentRoutes(r, app) {
         ? !!db.prepare('SELECT 1 FROM attendance WHERE session_id = ? AND student_id = ?').get(active.id, user.id)
         : false;
       return {
-        courseId: c.id, code: c.code, name: c.name,
+        courseId: c.id, code: c.code, name: c.name, beaconId: c.beacon_id,
         startTime: c.start_time, endTime: c.end_time,
         timeLabel: `${formatTime12(c.start_time)} \u2013 ${formatTime12(c.end_time)}`,
         activeSessionCode: active?.code ?? null,   // null => teacher hasn't opened attendance yet

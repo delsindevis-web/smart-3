@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { api } from "../api";
 import "../styles/professor-dashboard.css";
 
 // ============================================
@@ -40,6 +41,7 @@ const navigation = [
   { name: "Live Attendance", icon: "◉" },
   { name: "Attendance Records", icon: "▦" },
   { name: "Reports", icon: "▥" },
+  { name: "Add Student", icon: "+" },
   { name: "Settings", icon: "⚙" },
 ];
 
@@ -110,6 +112,10 @@ function ProfessorDashboard({ professorId, onLogout }) {
 
   // Demo attendance records
   const [demoAttendance, setDemoAttendance] = useState([]);
+  const [newStudent, setNewStudent] = useState({ loginId: "", name: "", password: "", confirmPassword: "" });
+  const [creatingStudent, setCreatingStudent] = useState(false);
+  const [studentMessage, setStudentMessage] = useState("");
+  const [studentError, setStudentError] = useState("");
 
   // ============================================
   // CURRENT DATE
@@ -307,6 +313,34 @@ function ProfessorDashboard({ professorId, onLogout }) {
       ...previous,
       demoStudent,
     ]);
+  };
+
+  const createStudent = async (event) => {
+    event.preventDefault();
+    setStudentMessage("");
+    setStudentError("");
+    if (newStudent.password !== newStudent.confirmPassword) {
+      setStudentError("Passwords do not match.");
+      return;
+    }
+
+    setCreatingStudent(true);
+    try {
+      const result = await api("/api/teacher/users", {
+        method: "POST",
+        body: {
+          loginId: newStudent.loginId,
+          name: newStudent.name,
+          password: newStudent.password,
+        },
+      });
+      setStudentMessage(`Student account created for ${result.user.name} (${result.user.loginId}).`);
+      setNewStudent({ loginId: "", name: "", password: "", confirmPassword: "" });
+    } catch (err) {
+      setStudentError(err.message);
+    } finally {
+      setCreatingStudent(false);
+    }
   };
 
   // ============================================
@@ -1335,6 +1369,69 @@ function ProfessorDashboard({ professorId, onLogout }) {
 
         )}
 
+        {activeTab === "Add Student" && (
+          <section className="student-account-panel">
+            <div className="section-heading">
+              <div>
+                <h2>Create student account</h2>
+                <p>Set a student ID and password for a new attendance account.</p>
+              </div>
+            </div>
+            <form className="student-account-form" onSubmit={createStudent}>
+              <label htmlFor="newStudentId">Student ID</label>
+              <input
+                id="newStudentId"
+                autoComplete="off"
+                maxLength={100}
+                required
+                value={newStudent.loginId}
+                onChange={(event) => setNewStudent({ ...newStudent, loginId: event.target.value })}
+              />
+
+              <label htmlFor="newStudentName">Full name</label>
+              <input
+                id="newStudentName"
+                autoComplete="name"
+                maxLength={100}
+                required
+                value={newStudent.name}
+                onChange={(event) => setNewStudent({ ...newStudent, name: event.target.value })}
+              />
+
+              <label htmlFor="newStudentPassword">Create password</label>
+              <input
+                id="newStudentPassword"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={1024}
+                required
+                value={newStudent.password}
+                onChange={(event) => setNewStudent({ ...newStudent, password: event.target.value })}
+              />
+
+              <label htmlFor="confirmStudentPassword">Confirm password</label>
+              <input
+                id="confirmStudentPassword"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={1024}
+                required
+                value={newStudent.confirmPassword}
+                onChange={(event) => setNewStudent({ ...newStudent, confirmPassword: event.target.value })}
+              />
+
+              {studentError && <p className="student-account-error" role="alert">{studentError}</p>}
+              {studentMessage && <p className="student-account-success" role="status">{studentMessage}</p>}
+
+              <button type="submit" className="start-button" disabled={creatingStudent}>
+                {creatingStudent ? "Creating account..." : "Create student account"}
+              </button>
+            </form>
+          </section>
+        )}
+
         {/* FOOTER */}
 
         <footer className="professor-footer">
@@ -1348,4 +1445,3 @@ function ProfessorDashboard({ professorId, onLogout }) {
 }
 
 export default ProfessorDashboard;
-

@@ -1,72 +1,36 @@
-import "../styles/attendance-success.css";
+﻿import "../styles/attendance-success.css";
 
-function AttendanceSuccess({
-  className,
-  studentId,
-  verifiedQR,
-}) {
+const factorLabels = {
+  ble: "BLE proximity verified",
+  face: "Face liveness verified",
+  qr: "Dynamic QR validated",
+};
+
+function AttendanceSuccess({ className, studentId, attendanceResult }) {
+  const verified = attendanceResult?.verified ?? {};
+  const markedAt = attendanceResult?.markedAt
+    ? new Date(attendanceResult.markedAt).toLocaleTimeString()
+    : null;
+  const completedFactors = Object.entries(factorLabels)
+    .filter(([factor]) => verified[factor])
+    .map(([, label]) => label);
+
   return (
     <main className="success-page">
       <section className="success-card">
-
-        {/* Success Icon */}
-        <div className="success-check">
-          ✓
-        </div>
-
-        {/* Heading */}
+        <div className="success-check">✓</div>
         <h1>Attendance Marked!</h1>
-
-        <p className="success-message">
-          Your attendance has been successfully recorded.
-        </p>
-
-        {/* Attendance Details */}
+        <p className="success-message">Your attendance has been recorded by the server.</p>
         <div className="attendance-details">
-          <div>
-            <span>Class</span>
-            <strong>{className || "Selected class"}</strong>
-          </div>
-
-          <div>
-            <span>Status</span>
-            <strong>Present</strong>
-          </div>
-
-          {studentId && (
-            <div>
-              <span>Student ID</span>
-              <strong>{studentId}</strong>
-            </div>
-          )}
+          <div><span>Class</span><strong>{className || "Selected class"}</strong></div>
+          <div><span>Status</span><strong>{attendanceResult?.status ?? "Present"}</strong></div>
+          {studentId && <div><span>Student ID</span><strong>{studentId}</strong></div>}
+          {markedAt && <div><span>Marked at</span><strong>{markedAt}</strong></div>}
         </div>
-
-        {/* Verification Summary */}
         <div className="success-verification">
-          <p>
-            ✓ &nbsp; BLE proximity verified
-          </p>
-
-          <p>
-            ✓ &nbsp; Face liveness verified
-          </p>
-
-          <p>
-            ✓ &nbsp; Dynamic QR validated
-          </p>
-
-          <p>
-            ✓ &nbsp; Attendance flow completed
-          </p>
+          {completedFactors.map((label) => <p key={label}>✓ &nbsp; {label}</p>)}
         </div>
-
-        {/* Footer Message */}
-        <p className="success-note">
-          Your attendance verification flow completed using
-          BLE proximity, face verification, and dynamic QR
-          validation.
-        </p>
-
+        <p className="success-note">Attendance was recorded after the required checks passed.</p>
       </section>
     </main>
   );

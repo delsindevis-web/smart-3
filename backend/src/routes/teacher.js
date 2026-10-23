@@ -1,10 +1,39 @@
 import { HttpError } from '../errors.js';
 import { audit } from '../db.js';
+import { hashPassword } from '../auth.js';
 import { currentQr } from '../services/qr.js';
 
 export function registerTeacherRoutes(r, app) {
   const { db, config } = app;
   const teacher = { roles: ['teacher'] };
+
+  // POST /api/teacher/users { loginId, name, password }
+  r.post('/api/teacher/users', ({ user, body }) => {
+    const loginId = String(body.loginId ?? '').trim();
+    const name = String(body.name ?? '').trim();
+    const password = String(body.password ?? '');
+    if (!loginId || loginId.length > 100) {
+      throw new HttpError(400, 'VALIDATION_ERROR', 'Enter a valid student ID (100 characters maximum).');
+    }
+    if (!name || name.length > 100) {
+      throw new HttpError(400, 'VALIDATION_ERROR', 'Enter a valid name (100 characters maximum).');
+    }
+    if (password.length < 8 || password.length > 1024) {
+      throw new HttpError(400, 'VALIDATION_ERROR', 'Password must be between 8 and 1024 characters.');
+    }
+    if (db.prepare('SELECT 1 FROM users WHERE login_id = ? COLLATE NOCASE').get(loginId)) {
+      throw new HttpError(409, 'USER_ALREADY_EXISTS', 'A user with that student ID already exists.');
+    }
+
+    const result = db.prepare(
+      'INSERT INTO users (login_id, name, role, password_hash, password_required, created_at) VALUES (?,?,?,?,?,?)'
+    ).run(loginId, name, 'student', hashPassword(password), 1, Date.now());
+    audit(db, user.id, 'student_created', { loginId });
+    return {
+      status: 201,
+      body: { user: { id: Number(result.lastInsertRowid), loginId, name, role: 'student' } },
+    };
+  }, teacher);
 
   const ownSession = (user, code) => {
     const s = db.prepare(

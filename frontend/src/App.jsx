@@ -1,194 +1,89 @@
-import { useState, useCallback } from "react";
+import { lazy, Suspense, useState } from "react";
+import { api } from "./api";
 
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import BleVerification from "./pages/BleVerification";
-import FaceLiveness from "./pages/FaceLiveness";
-import StudentQRVerification from "./pages/StudentQRVerification";
-import AttendanceSuccess from "./pages/AttendanceSuccess";
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const BleVerification = lazy(() => import("./pages/BleVerification"));
+const FaceLiveness = lazy(() => import("./pages/FaceLiveness"));
+const StudentQRVerification = lazy(() => import("./pages/StudentQRVerification"));
+const AttendanceSuccess = lazy(() => import("./pages/AttendanceSuccess"));
+const ProfessorLogin = lazy(() => import("./pages/ProfessorLogin"));
+const ProfessorDashboard = lazy(() => import("./pages/ProfessorDashboard"));
 
-import ProfessorLogin from "./pages/ProfessorLogin";
-import ProfessorDashboard from "./pages/ProfessorDashboard";
-
-function App() {
+function AppContent() {
   const [studentId, setStudentId] = useState("");
-  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [attemptId, setAttemptId] = useState(null);
+  const [requiredFactors, setRequiredFactors] = useState([]);
   const [currentPage, setCurrentPage] = useState("login");
-
   const [professorId, setProfessorId] = useState("");
+  const [attendanceResult, setAttendanceResult] = useState(null);
+  const [flowError, setFlowError] = useState("");
 
-  const [verifiedQR, setVerifiedQR] = useState(null);
+  const handleLogin = (id) => { setStudentId(id); setCurrentPage("dashboard"); };
 
-  // ==========================================
-  // STUDENT FLOW
-  // ==========================================
-
-  const handleLogin = (id) => {
-    setStudentId(id);
-    setCurrentPage("dashboard");
-  };
-
-  const handleAttendance = (className) => {
-    setSelectedClass(className);
-    setVerifiedQR(null);
+  const handleAttendance = async (course) => {
+    const result = await api("/api/attendance/attempts", {
+      method: "POST", body: { courseId: course.courseId },
+    });
+    setSelectedClass(course);
+    setAttemptId(result.attemptId);
+    setRequiredFactors(result.requiredFactors);
+    setAttendanceResult(null);
+    setFlowError("");
     setCurrentPage("ble");
   };
 
-  // BLE verified -> Face verification
-  const handleBleVerified = () => {
-    setCurrentPage("face");
-  };
+  const handleBleVerified = () => setCurrentPage("face");
 
-  // Face verified -> QR verification
-  const handleFaceVerified = () => {
-    setCurrentPage("qr");
-  };
-
-  // QR verified -> Success
-  const handleQRVerified = useCallback((qrData) => {
-    setVerifiedQR(qrData);
+  const finishAttendance = async () => {
+    const result = await api(`/api/attendance/attempts/${attemptId}/complete`, { method: "POST" });
+    setAttendanceResult(result);
     setCurrentPage("success");
-  }, []);
-
-  // ==========================================
-  // PROFESSOR FLOW
-  // ==========================================
-
-  const handleProfessorLogin = (professor) => {
-    setProfessorId(professor.professorId);
-    setCurrentPage("professor-dashboard");
   };
 
-  // ==========================================
-  // STUDENT LOGIN
-  // ==========================================
+  const handleFaceVerified = async () => {
+    if (requiredFactors.includes("qr")) setCurrentPage("qr");
+    else await finishAttendance();
+  };
 
-  if (currentPage === "login") {
-    return (
-      <div>
-        <Login onLogin={handleLogin} />
+  const handleQRVerified = async (qrData) => {
+    try {
+      await api(`/api/attendance/attempts/${attemptId}/qr`, {
+        method: "POST", body: { token: qrData.token },
+      });
 
-        <div
-          style={{
-            textAlign: "center",
-            padding: "16px",
-            background: "#080c18",
-          }}
-        >
-          <button
-            onClick={() => setCurrentPage("professor-login")}
-            style={{
-              background: "transparent",
-              color: "#a5a8ff",
-              border: "1px solid #4545a5",
-              borderRadius: "8px",
-              padding: "10px 20px",
-              cursor: "pointer",
-            }}
-          >
-            Professor Login →
-          </button>
-        </div>
-      </div>
-    );
-  }
+      await finishAttendance();
+    } catch (err) {
+      setFlowError(err.message);
+      setCurrentPage("face");
+    }
+  };
 
-  // ==========================================
-  // STUDENT DASHBOARD
-  // ==========================================
+  if (currentPage === "login") return <div>
+    <Login onLogin={handleLogin} />
+    <div style={{ textAlign: "center", padding: "16px", background: "#080c18" }}>
+      <button onClick={() => setCurrentPage("professor-login")} style={{ background: "transparent", color: "#a5a8ff", border: "1px solid #4545a5", borderRadius: "8px", padding: "10px 20px", cursor: "pointer" }}>
+        Professor Login
+      </button>
+    </div>
+  </div>;
 
-  if (currentPage === "dashboard") {
-    return (
-      <Dashboard
-        studentId={studentId}
-        onAttendance={handleAttendance}
-      />
-    );
-  }
-
-  // ==========================================
-  // BLE VERIFICATION
-  // ==========================================
-
-  if (currentPage === "ble") {
-    return (
-      <BleVerification
-        className={selectedClass}
-        onVerified={handleBleVerified}
-      />
-    );
-  }
-
-  // ==========================================
-  // FACE VERIFICATION
-  // ==========================================
-
-  if (currentPage === "face") {
-    return (
-      <FaceLiveness
-        className={selectedClass}
-        onVerified={handleFaceVerified}
-      />
-    );
-  }
-
-  // ==========================================
-  // DYNAMIC QR VERIFICATION
-  // ==========================================
-
-  if (currentPage === "qr") {
-    return (
-      <StudentQRVerification
-        className={selectedClass}
-        onVerified={handleQRVerified}
-      />
-    );
-  }
-
-  // ==========================================
-  // ATTENDANCE SUCCESS
-  // ==========================================
-
-  if (currentPage === "success") {
-    return (
-      <AttendanceSuccess
-        className={selectedClass}
-        studentId={studentId}
-        verifiedQR={verifiedQR}
-      />
-    );
-  }
-
-  // ==========================================
-  // PROFESSOR LOGIN
-  // ==========================================
-
-  if (currentPage === "professor-login") {
-    return (
-      <ProfessorLogin
-        onLogin={handleProfessorLogin}
-      />
-    );
-  }
-
-  // ==========================================
-  // PROFESSOR DASHBOARD
-  // ==========================================
-
-  if (currentPage === "professor-dashboard") {
-    return (
-      <ProfessorDashboard
-        professorId={professorId}
-        onLogout={() => {
-          setProfessorId("");
-          setCurrentPage("login");
-        }}
-      />
-    );
-  }
-
+  if (currentPage === "dashboard") return <Dashboard studentId={studentId} onAttendance={handleAttendance} />;
+  if (currentPage === "ble") return <BleVerification className={selectedClass?.name} attemptId={attemptId} beaconId={selectedClass?.beaconId} onVerified={handleBleVerified} />;
+  if (currentPage === "face") return <>
+    {flowError && <p role="alert" className="error-message">{flowError}</p>}
+    <FaceLiveness className={selectedClass?.name} attemptId={attemptId} onVerified={handleFaceVerified} />
+  </>;
+  if (currentPage === "qr") return <StudentQRVerification className={selectedClass?.name} onVerified={handleQRVerified} />;
+  if (currentPage === "success") return <AttendanceSuccess className={selectedClass?.name} studentId={studentId} attendanceResult={attendanceResult} />;
+  if (currentPage === "professor-login") return <ProfessorLogin onLogin={(professor) => { setProfessorId(professor.loginId); setCurrentPage("professor-dashboard"); }} />;
+  if (currentPage === "professor-dashboard") return <ProfessorDashboard professorId={professorId} onLogout={() => { sessionStorage.removeItem("token"); setProfessorId(""); setCurrentPage("login"); }} />;
   return null;
 }
 
-export default App;
+function App() {
+  return <Suspense fallback={<main className="page-loading" role="status">Loading page?</main>}><AppContent /></Suspense>;
+}
 
+export default App;

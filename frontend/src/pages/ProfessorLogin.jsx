@@ -1,12 +1,14 @@
 import { useState } from "react";
+import { login } from "../api";
 import "../styles/professor-login.css";
 
 function ProfessorLogin({ onLogin }) {
+  const [submitting, setSubmitting] = useState(false);
   const [professorId, setProfessorId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     if (!professorId.trim() || !password) {
@@ -15,12 +17,19 @@ function ProfessorLogin({ onLogin }) {
     }
 
     setError("");
-
-    // Temporary frontend demonstration.
-    // Replace with backend authentication later.
-    onLogin({
-      professorId: professorId.trim(),
-    });
+    setSubmitting(true);
+    try {
+      const user = await login(professorId, password);
+      if (user.role !== "teacher") {
+        sessionStorage.removeItem("token");
+        throw new Error("This account does not have professor access.");
+      }
+      onLogin(user);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -80,8 +89,9 @@ function ProfessorLogin({ onLogin }) {
           <button
             type="submit"
             className="professor-login-button"
+            disabled={submitting}
           >
-            Login to Dashboard
+            {submitting ? "Signing in..." : "Login to Dashboard"}
           </button>
         </form>
 

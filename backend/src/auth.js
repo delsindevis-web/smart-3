@@ -1,19 +1,23 @@
 import crypto from 'node:crypto';
+import { promisify } from 'node:util';
 import { HttpError } from './errors.js';
 
 // ---------- passwords (scrypt) ----------
+const scryptAsync = promisify(crypto.scrypt);
 export function hashPassword(password) {
   const salt = crypto.randomBytes(16);
   const hash = crypto.scryptSync(password, salt, 64);
   return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
 }
 
-export function verifyPassword(password, stored) {
-  if (!stored) return false;
-  const [scheme, saltHex, hashHex] = stored.split('$');
-  if (scheme !== 'scrypt') return false;
+export async function verifyPassword(password, stored) {
+  if (typeof stored !== 'string') return false;
+  const [scheme, saltHex, hashHex, extra] = stored.split('$');
+  if (extra !== undefined || scheme !== 'scrypt' || !/^[a-f0-9]{32}$/i.test(saltHex || '') || !/^[a-f0-9]{128}$/i.test(hashHex || '')) {
+    return false;
+  }
   const expected = Buffer.from(hashHex, 'hex');
-  const actual = crypto.scryptSync(password, Buffer.from(saltHex, 'hex'), expected.length);
+  const actual = await scryptAsync(String(password), Buffer.from(saltHex, 'hex'), expected.length);
   return crypto.timingSafeEqual(expected, actual);
 }
 
@@ -58,14 +62,24 @@ export function authenticate(app, req) {
 // from the same campus Wi-Fi address is never throttled by each other's successes.
 export function createFailureLimiter(max, windowMs) {
   const hits = new Map();
-  const recent = (key) => (hits.get(key) || []).filter((t) => Date.now() - t < windowMs);
+  const maxKeys = 10_000;
+  const recent = (key) => {
+    const active = (hits.get(key) || []).filter((time) => Date.now() - time < windowMs);
+    if (active.length) hits.set(key, active);
+    else hits.delete(key);
+    return active;
+  };
   return {
     check(key) {
       if (recent(key).length >= max) {
         throw new HttpError(429, 'RATE_LIMITED', 'Too many failed attempts. Please wait a minute and try again.');
       }
     },
-    fail(key) { hits.set(key, [...recent(key), Date.now()]); },
+    fail(key) {
+      const active = recent(key);
+      if (!hits.has(key) && hits.size >= maxKeys) hits.delete(hits.keys().next().value);
+      hits.set(key, [...active, Date.now()]);
+    },
     reset(key) { hits.delete(key); },
   };
 }

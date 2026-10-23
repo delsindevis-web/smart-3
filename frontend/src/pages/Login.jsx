@@ -1,22 +1,29 @@
 import { useState } from "react";
+import { login } from "../api";
 import "../styles/login.css";
 
 function Login({ onLogin }) {
+  const [submitting, setSubmitting] = useState(false);
   const [studentId, setStudentId] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
     if (!studentId.trim()) {
       setError("Please enter your student ID.");
       return;
     }
-
     setError("");
-
-    console.log("Student ID:", studentId);
-    onLogin(studentId.trim());
+    setSubmitting(true);
+    try {
+      const user = await login(studentId, password);
+      onLogin(user.loginId);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -38,11 +45,19 @@ function Login({ onLogin }) {
             placeholder="Enter your student ID"
           />
 
+          <label htmlFor="password">Password <span>(if required)</span></label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Enter your password"
+            autoComplete="current-password"
+          />
+
           {error && <p className="error-message">{error}</p>}
 
-          <button type="submit">
-            Continue
-          </button>
+          <button type="submit" disabled={submitting}>{submitting ? "Signing in..." : "Continue"}</button>
         </form>
 
         <p className="login-info">

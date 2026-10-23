@@ -52,6 +52,9 @@ export function loadConfig(overrides = {}) {
     qrTtlSeconds: num('QR_TTL_SECONDS', 5),
     qrGraceSeconds: num('QR_GRACE_SECONDS', 3),
     livenessMinScore: num('LIVENESS_MIN_SCORE', 0.85),
+    livenessServiceUrl: env.LIVENESS_SERVICE_URL || '',
+    livenessServiceToken: env.LIVENESS_SERVICE_TOKEN || '',
+    livenessServiceTimeoutMs: num('LIVENESS_SERVICE_TIMEOUT_MS', 15_000),
     livenessChallengeTtlSeconds: num('LIVENESS_CHALLENGE_TTL_SECONDS', 30),
     livenessMinResponseMs: 800,
     attemptTtlMinutes: num('ATTEMPT_TTL_MINUTES', 10),
@@ -59,6 +62,15 @@ export function loadConfig(overrides = {}) {
     ...overrides,
   };
 
+  if (nodeEnv === 'production') {
+    if (String(config.jwtSecret).length < 32) throw new Error('JWT_SECRET must contain at least 32 characters in production');
+    if (!config.requirePassword) throw new Error('REQUIRE_PASSWORD=true is required in production');
+    if (config.seedOnEmpty) throw new Error('SEED_ON_EMPTY=false is required in production');
+    if (config.corsOrigins.includes('*')) throw new Error('CORS_ORIGINS cannot include * in production');
+    if (config.requiredFactors.includes('face') && !config.livenessServiceUrl) {
+      throw new Error('LIVENESS_SERVICE_URL is required in production when face is a required factor');
+    }
+  }
   const bad = config.requiredFactors.filter((f) => !FACTORS.includes(f));
   if (bad.length || config.requiredFactors.length === 0) {
     throw new Error(`REQUIRED_FACTORS must be a non-empty subset of ${FACTORS.join(',')} (got: ${config.requiredFactors})`);
@@ -75,6 +87,20 @@ export function loadConfig(overrides = {}) {
   }
   if (config.port > 65535 || !Number.isInteger(config.port)) {
     throw new Error('port must be an integer between 1 and 65535');
+  }
+  if (config.livenessServiceTimeoutMs < 1_000 || config.livenessServiceTimeoutMs > 30_000) {
+    throw new Error('LIVENESS_SERVICE_TIMEOUT_MS must be between 1000 and 30000');
+  }
+  if (config.livenessMinScore < 0 || config.livenessMinScore > 1) {
+    throw new Error('LIVENESS_MIN_SCORE must be between 0 and 1');
+  }
+  if (config.livenessServiceUrl) {
+    let verifierUrl;
+    try { verifierUrl = new URL(config.livenessServiceUrl); } catch { throw new Error('LIVENESS_SERVICE_URL must be a valid HTTP(S) URL'); }
+    if (!['http:', 'https:'].includes(verifierUrl.protocol)) throw new Error('LIVENESS_SERVICE_URL must use HTTP or HTTPS');
+    if (verifierUrl.username || verifierUrl.password) throw new Error('LIVENESS_SERVICE_URL must not contain credentials');
+    if (nodeEnv === 'production' && verifierUrl.protocol !== 'https:') throw new Error('LIVENESS_SERVICE_URL must use HTTPS in production');
+    if (!config.livenessServiceToken || config.livenessServiceToken.length < 32) throw new Error('LIVENESS_SERVICE_TOKEN must contain at least 32 characters when LIVENESS_SERVICE_URL is set');
   }
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: config.timezone });

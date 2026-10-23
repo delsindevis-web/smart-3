@@ -11,29 +11,48 @@ import { registerAttendanceRoutes } from './routes/attendance.js';
 import { registerTeacherRoutes } from './routes/teacher.js';
 import { seed } from './seed.js';
 
-const MAX_BODY = 1_000_000; // 1 MB
+const MAX_BODY = 10_000_000; // 10 MB (camera frame payloads)
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
     if (['GET', 'DELETE', 'HEAD', 'OPTIONS'].includes(req.method)) return resolve({});
+    const contentLength = Number(req.headers['content-length']);
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY) {
+      req.resume();
+      return reject(new HttpError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large.'));
+    }
     const chunks = [];
     let size = 0;
-    req.on('data', (c) => {
-      size += c.length;
-      if (size > MAX_BODY) { reject(new HttpError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large.')); req.destroy(); return; }
-      chunks.push(c);
+    let settled = false;
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    req.on('data', (chunk) => {
+      if (settled) return;
+      size += chunk.length;
+      if (size > MAX_BODY) {
+        chunks.length = 0;
+        fail(new HttpError(413, 'PAYLOAD_TOO_LARGE', 'Request body too large.'));
+        req.resume();
+        return;
+      }
+      chunks.push(chunk);
     });
     req.on('end', () => {
-      if (!chunks.length) return resolve({});
+      if (settled) return;
+      if (!chunks.length) { settled = true; return resolve({}); }
       try {
         const parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'));
         if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+        settled = true;
         resolve(parsed);
       } catch {
-        reject(new HttpError(400, 'INVALID_JSON', 'Request body must be a JSON object.'));
+        fail(new HttpError(400, 'INVALID_JSON', 'Request body must be a JSON object.'));
       }
     });
-    req.on('error', reject);
+    req.on('error', fail);
   });
 }
 

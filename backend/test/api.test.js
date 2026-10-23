@@ -73,6 +73,44 @@ test('REQUIRE_PASSWORD=true makes students need a password too', async () => {
   await t.close();
 });
 
+test('teacher can create a student account with a password', async () => {
+  const t = await boot();
+  const teacher = await t.login('T001', 'teacher123');
+
+  const created = await t.call('POST', '/api/teacher/users', {
+    token: teacher,
+    body: { loginId: '23BCS099', name: 'New Student', password: 'securepass99' },
+  });
+  assert.equal(created.status, 201);
+  assert.deepEqual(created.body.user, {
+    id: created.body.user.id, loginId: '23BCS099', name: 'New Student', role: 'student',
+  });
+  assert.equal((await t.call('POST', '/api/auth/login', {
+    body: { loginId: '23BCS099' },
+  })).status, 401);
+  assert.equal((await t.call('POST', '/api/auth/login', {
+    body: { loginId: '23BCS099', password: 'securepass99' },
+  })).status, 200);
+  assert.equal((await t.call('POST', '/api/teacher/users', {
+    token: teacher,
+    body: { loginId: '23bcs099', name: 'Duplicate', password: 'securepass99' },
+  })).status, 409);
+  assert.equal((await t.call('POST', '/api/teacher/users', {
+    token: teacher,
+    body: { loginId: '23BCS100', name: 'Short Password', password: 'short' },
+  })).status, 400);
+
+  const student = await t.login('23BCS001');
+  assert.equal((await t.call('POST', '/api/teacher/users', {
+    token: student,
+    body: { loginId: '23BCS101', name: 'Unauthorized', password: 'securepass99' },
+  })).status, 403);
+  assert.equal((await t.call('POST', '/api/teacher/users', {
+    body: { loginId: '23BCS102', name: 'Unauthenticated', password: 'securepass99' },
+  })).status, 401);
+  await t.close();
+});
+
 test('full BLE + face flow records attendance exactly once', async () => {
   const t = await boot();
   const { teacher, course, code } = await openSession(t);
