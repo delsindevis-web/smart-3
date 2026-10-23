@@ -2,7 +2,7 @@
 import { api } from "../api";
 import "../styles/dashboard.css";
 
-function Dashboard({ studentId, onAttendance }) {
+function Dashboard({ studentId, studentName, onAttendance, onLogout }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [startingCourse, setStartingCourse] = useState(null);
@@ -32,7 +32,14 @@ function Dashboard({ studentId, onAttendance }) {
       <section className="dashboard-container">
         <header className="dashboard-header">
           <div><h1>Smart Attendance</h1><p>Welcome to your dashboard</p></div>
-          <div className="student-info"><span>Student</span><strong>{data?.student?.studentId ?? studentId}</strong></div>
+          <div className="student-info">
+            <span>Student</span>
+            <strong>{data?.student?.name ?? studentName}</strong>
+            <small>{data?.student?.studentId ?? studentId}</small>
+            {onLogout && (
+              <button type="button" className="logout-link" onClick={onLogout}>Log out</button>
+            )}
+          </div>
         </header>
         {error && <p className="error-message" role="alert">{error}</p>}
         {!data && !error && <p>Loading your classes…</p>}

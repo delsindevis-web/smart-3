@@ -1,26 +1,82 @@
-import { lazy, Suspense, useState } from "react";
-import { api } from "./api";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { api, AUTH_EXPIRED_EVENT, fetchCurrentUser, hasToken, logout } from "./api";
 
-const Login = lazy(() => import("./pages/Login"));
+const AuthPage = lazy(() => import("./pages/AuthPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const BleVerification = lazy(() => import("./pages/BleVerification"));
 const FaceLiveness = lazy(() => import("./pages/FaceLiveness"));
 const StudentQRVerification = lazy(() => import("./pages/StudentQRVerification"));
 const AttendanceSuccess = lazy(() => import("./pages/AttendanceSuccess"));
-const ProfessorLogin = lazy(() => import("./pages/ProfessorLogin"));
 const ProfessorDashboard = lazy(() => import("./pages/ProfessorDashboard"));
 
+const STUDENT_PAGES = new Set(["dashboard", "ble", "face", "qr", "success"]);
+const TEACHER_PAGES = new Set(["professor-dashboard"]);
+
+function dashboardFor(role) {
+  return role === "teacher" ? "professor-dashboard" : "dashboard";
+}
+
+function allowedPage(role, page) {
+  if (role === "teacher") return TEACHER_PAGES.has(page) ? page : dashboardFor(role);
+  if (role === "student") return STUDENT_PAGES.has(page) ? page : dashboardFor(role);
+  return "login";
+}
+
 function AppContent() {
-  const [studentId, setStudentId] = useState("");
+  const [authReady, setAuthReady] = useState(!hasToken());
+  const [user, setUser] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
   const [attemptId, setAttemptId] = useState(null);
   const [requiredFactors, setRequiredFactors] = useState([]);
   const [currentPage, setCurrentPage] = useState("login");
-  const [professorId, setProfessorId] = useState("");
   const [attendanceResult, setAttendanceResult] = useState(null);
   const [flowError, setFlowError] = useState("");
 
-  const handleLogin = (id) => { setStudentId(id); setCurrentPage("dashboard"); };
+  const resetAttendanceFlow = () => {
+    setSelectedClass(null);
+    setAttemptId(null);
+    setRequiredFactors([]);
+    setAttendanceResult(null);
+    setFlowError("");
+  };
+
+  const handleLogout = useCallback(() => {
+    logout();
+    setUser(null);
+    resetAttendanceFlow();
+    setCurrentPage("login");
+  }, []);
+
+  const handleAuthenticated = (authenticatedUser) => {
+    setUser(authenticatedUser);
+    setCurrentPage(dashboardFor(authenticatedUser.role));
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!hasToken()) {
+        setAuthReady(true);
+        return;
+      }
+      const current = await fetchCurrentUser();
+      if (cancelled) return;
+      if (current) {
+        setUser(current);
+        setCurrentPage((page) => allowedPage(current.role, page === "login" ? dashboardFor(current.role) : page));
+      } else {
+        setCurrentPage("login");
+      }
+      setAuthReady(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const onExpired = () => handleLogout();
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, [handleLogout]);
 
   const handleAttendance = async (course) => {
     const result = await api("/api/attendance/attempts", {
@@ -52,7 +108,6 @@ function AppContent() {
       await api(`/api/attendance/attempts/${attemptId}/qr`, {
         method: "POST", body: { token: qrData.token },
       });
-
       await finishAttendance();
     } catch (err) {
       setFlowError(err.message);
@@ -60,25 +115,65 @@ function AppContent() {
     }
   };
 
-  if (currentPage === "login") return <div>
-    <Login onLogin={handleLogin} />
-    <div style={{ textAlign: "center", padding: "16px", background: "#080c18" }}>
-      <button onClick={() => setCurrentPage("professor-login")} style={{ background: "transparent", color: "#a5a8ff", border: "1px solid #4545a5", borderRadius: "8px", padding: "10px 20px", cursor: "pointer" }}>
-        Professor Login
-      </button>
-    </div>
-  </div>;
+  if (!authReady) {
+    return <main className="page-loading" role="status">Restoring session…</main>;
+  }
 
-  if (currentPage === "dashboard") return <Dashboard studentId={studentId} onAttendance={handleAttendance} />;
-  if (currentPage === "ble") return <BleVerification className={selectedClass?.name} attemptId={attemptId} beaconId={selectedClass?.beaconId} onVerified={handleBleVerified} />;
-  if (currentPage === "face") return <>
-    {flowError && <p role="alert" className="error-message">{flowError}</p>}
-    <FaceLiveness className={selectedClass?.name} attemptId={attemptId} onVerified={handleFaceVerified} />
-  </>;
-  if (currentPage === "qr") return <StudentQRVerification className={selectedClass?.name} onVerified={handleQRVerified} />;
-  if (currentPage === "success") return <AttendanceSuccess className={selectedClass?.name} studentId={studentId} attendanceResult={attendanceResult} />;
-  if (currentPage === "professor-login") return <ProfessorLogin onLogin={(professor) => { setProfessorId(professor.loginId); setCurrentPage("professor-dashboard"); }} />;
-  if (currentPage === "professor-dashboard") return <ProfessorDashboard professorId={professorId} onLogout={() => { sessionStorage.removeItem("token"); setProfessorId(""); setCurrentPage("login"); }} />;
+  if (!user) {
+    return <AuthPage onAuthenticated={handleAuthenticated} />;
+  }
+
+  const page = allowedPage(user.role, currentPage);
+
+  if (user.role === "teacher") {
+    return (
+      <ProfessorDashboard
+        professorId={user.loginId}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (page === "dashboard") {
+    return (
+      <Dashboard
+        studentId={user.loginId}
+        studentName={user.name}
+        onAttendance={handleAttendance}
+        onLogout={handleLogout}
+      />
+    );
+  }
+  if (page === "ble") {
+    return (
+      <BleVerification
+        className={selectedClass?.name}
+        attemptId={attemptId}
+        beaconId={selectedClass?.beaconId}
+        onVerified={handleBleVerified}
+      />
+    );
+  }
+  if (page === "face") {
+    return (
+      <>
+        {flowError && <p role="alert" className="error-message">{flowError}</p>}
+        <FaceLiveness className={selectedClass?.name} attemptId={attemptId} onVerified={handleFaceVerified} />
+      </>
+    );
+  }
+  if (page === "qr") {
+    return <StudentQRVerification className={selectedClass?.name} onVerified={handleQRVerified} />;
+  }
+  if (page === "success") {
+    return (
+      <AttendanceSuccess
+        className={selectedClass?.name}
+        studentId={user.loginId}
+        attendanceResult={attendanceResult}
+      />
+    );
+  }
   return null;
 }
 

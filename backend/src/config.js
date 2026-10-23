@@ -47,6 +47,8 @@ export function loadConfig(overrides = {}) {
     timezone: env.TIMEZONE || 'Asia/Kolkata',
     seedOnEmpty: bool('SEED_ON_EMPTY', true),
     requirePassword: bool('REQUIRE_PASSWORD', false),
+    teacherSignupCode: env.TEACHER_SIGNUP_CODE || '',
+    autoEnrollOnSignup: bool('AUTO_ENROLL_ON_SIGNUP', true),
     requiredFactors: list('REQUIRED_FACTORS', ['ble', 'face']),
     bleMinRssi: num('BLE_MIN_RSSI', -80),
     qrTtlSeconds: num('QR_TTL_SECONDS', 5),

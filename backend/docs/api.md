@@ -15,8 +15,9 @@ Show `error.message` to the user; branch on `error.code` in code.
 
 | Method & path | Who | Body → Response |
 |---|---|---|
-| `POST /api/auth/login` | public | `{ studentId or loginId, password? }` → `{ token, user:{id,loginId,name,role} }`. Teachers always need a password; students only if `REQUIRE_PASSWORD=true`. |
-| `GET /api/auth/me` | any | → `{ user }` |
+| `POST /api/auth/register` | public | `{ email, name, password, role, accessCode? }` → `201 { token, user:{id,loginId,name,role} }`. `role` is `student` or `teacher`. Teacher sign-up requires `TEACHER_SIGNUP_CODE` when that env var is set (and is disabled in production without it). Duplicate emails return `409 USER_ALREADY_EXISTS`. New students are enrolled in existing courses when `AUTO_ENROLL_ON_SIGNUP=true`. |
+| `POST /api/auth/login` | public | `{ loginId or email or studentId, password?, role? }` → `{ token, user:{id,loginId,name,role} }`. Teachers always need a password; students only if `REQUIRE_PASSWORD=true` or the account was created with a required password. Optional `role` must match the account (`403 ROLE_MISMATCH`). |
+| `GET /api/auth/me` | any logged-in user | → `{ user }` |
 
 ## Student
 

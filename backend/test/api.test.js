@@ -66,6 +66,55 @@ test('auth: student ID-only login, teacher needs password, roles enforced', asyn
   await t.close();
 });
 
+test('auth: students and teachers can register, then log in to the matching role', async () => {
+  const t = await boot({ teacherSignupCode: 'faculty-gate' });
+
+  const missing = await t.call('POST', '/api/auth/register', { body: { email: 'a@college.edu', password: 'password1' } });
+  assert.equal(missing.status, 400);
+
+  const student = await t.call('POST', '/api/auth/register', {
+    body: { email: 'aarav@college.edu', name: 'Aarav New', password: 'password1', role: 'student' },
+  });
+  assert.equal(student.status, 201);
+  assert.equal(student.body.user.role, 'student');
+  assert.equal(student.body.user.loginId, 'aarav@college.edu');
+  assert.ok(student.body.token);
+  assert.equal((await t.call('GET', '/api/student/dashboard', { token: student.body.token })).status, 200);
+  assert.equal((await t.call('GET', '/api/teacher/courses', { token: student.body.token })).status, 403);
+
+  assert.equal((await t.call('POST', '/api/auth/register', {
+    body: { email: 'aarav@college.edu', name: 'Dup', password: 'password1', role: 'student' },
+  })).status, 409);
+
+  const noCode = await t.call('POST', '/api/auth/register', {
+    body: { email: 'rao@college.edu', name: 'Dr Rao', password: 'password1', role: 'teacher' },
+  });
+  assert.equal(noCode.status, 403);
+
+  const teacher = await t.call('POST', '/api/auth/register', {
+    body: {
+      email: 'rao@college.edu', name: 'Dr Rao', password: 'password1', role: 'teacher', accessCode: 'faculty-gate',
+    },
+  });
+  assert.equal(teacher.status, 201);
+  assert.equal(teacher.body.user.role, 'teacher');
+  assert.equal((await t.call('GET', '/api/teacher/courses', { token: teacher.body.token })).status, 200);
+  assert.equal((await t.call('GET', '/api/student/dashboard', { token: teacher.body.token })).status, 403);
+
+  const mismatch = await t.call('POST', '/api/auth/login', {
+    body: { email: 'aarav@college.edu', password: 'password1', role: 'teacher' },
+  });
+  assert.equal(mismatch.status, 403);
+  assert.equal(mismatch.body.error.code, 'ROLE_MISMATCH');
+
+  const loginOk = await t.call('POST', '/api/auth/login', {
+    body: { email: 'aarav@college.edu', password: 'password1', role: 'student' },
+  });
+  assert.equal(loginOk.status, 200);
+  assert.equal(loginOk.body.user.role, 'student');
+  await t.close();
+});
+
 test('REQUIRE_PASSWORD=true makes students need a password too', async () => {
   const t = await boot({ requirePassword: true });
   assert.equal((await t.call('POST', '/api/auth/login', { body: { studentId: '23BCS001' } })).status, 401);
